@@ -15,7 +15,7 @@
         <v-card>
           <v-card-text>
             <v-list>
-              <v-list-item class="left" :class="{small: item.length > 35}" v-for="(item, i) in displayColumns[0]" :key="i">
+              <v-list-item class="left" v-for="(item, i) in displayColumns[0]" :key="i">
                 {{ item }}
               </v-list-item>
             </v-list>
@@ -26,7 +26,7 @@
         <v-card>
           <v-card-text>
             <v-list>
-              <v-list-item class="right" :class="{small: item.length > 35}" v-for="(item, i) in displayColumns[1]" :key="i" >
+              <v-list-item class="right" v-for="(item, i) in displayColumns[1]" :key="i" >
                 {{ item }}
               </v-list-item>
             </v-list>
@@ -54,6 +54,7 @@ export default {
       tmp.innerHTML = html;
       return tmp.textContent || tmp.innerText || "";
     }
+
     const loadCSV = () => {
       if (!file.value) return;
 
@@ -61,7 +62,7 @@ export default {
         complete: (results) => {
           csvData.value = results.data
             .filter(row => row.length >= 2 && row[0] && row[1])
-            .map(row => [row[0].trim(), row[1].trim()]);
+            .map(row => [stripHtml(row[0].trim()), stripHtml(row[1].trim())]);
           shuffleAndDisplay();
         },
         error: (error) => {
@@ -72,10 +73,10 @@ export default {
     };
 
     const shuffleAndDisplay = () => {
-      const shuffled = [...csvData.value];
+      const shuffled = [...csvData.value].sort((a, b) => a[1].localeCompare(b[1]))
       displayColumns.value = [
-        shuffled.map(row => stripHtml(row[0])),
-        shuffled.map(row => stripHtml(row[1]))
+        shuffled.map(row => row[0]),
+        shuffled.map(row => row[1])
       ];
     };
 
@@ -98,19 +99,17 @@ export default {
 <style>
   .v-list-item {
     box-shadow: none !important;
-    height: 37mm;
-    border-top: 1px white solid !important;
+    border-bottom: 1px lightgrey solid !important;
     box-sizing: border-box;
-    text-align: center;
+    text-align: left;
   }
   .v-list-item.left {
-    border-right: 1px white solid !important;
   }
   .v-list-item.left {
-    font-size: 40px;
+    font-size: 22px;
   }
   .v-list-item.right {
-    font-size: 20px;
+    font-size: 14px;
   }
   .v-card-text {
     padding: 0 !important;
@@ -131,12 +130,6 @@ export default {
   .v-container {
     padding: 0 !important;
   }
-  .left.small {
-    font-size: 30px !important;
-  }
-  .right.small {
-    font-size: 18px !important;
-  }
 @media print {
   .v-container {
     page-break-inside: avoid;
@@ -156,14 +149,14 @@ export default {
   }
   @page {
     size: A4;
-    margin: 0mm;
+    margin: 8mm;
     background-color: white;
   }
   .v-card {
     box-shadow: none !important;
   }
   .v-list-item, .left.v-list-item {
-    border-color:   grey !important;
+    border-color:   lightgrey !important;
   }
   .v-card-text {
     padding: 0 !important;

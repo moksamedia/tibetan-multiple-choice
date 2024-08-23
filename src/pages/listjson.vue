@@ -4,9 +4,9 @@
       <v-col cols="12">
         <v-file-input
           v-model="file"
-          label="Upload CSV File"
-          accept=".csv"
-          @change="loadCSV"
+          label="Upload JSON File"
+          accept=".json"
+          @change="loadJson"
         ></v-file-input>
       </v-col>
     </v-row>
@@ -15,8 +15,8 @@
         <v-card>
           <v-card-text>
             <v-list>
-              <v-list-item class="left" :class="{small: item.length > 35}" v-for="(item, i) in displayColumns[0]" :key="i">
-                {{ item }}
+              <v-list-item class="left" v-for="(item, i) in data" :key="i">
+                {{ getCol1(item) }}
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -26,8 +26,8 @@
         <v-card>
           <v-card-text>
             <v-list>
-              <v-list-item class="right" :class="{small: item.length > 35}" v-for="(item, i) in displayColumns[1]" :key="i" >
-                {{ item }}
+              <v-list-item class="right" v-for="(item, i) in data" :key="i" >
+                {{ stripHtml(item?.fields?.['English']) || "" }}
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -38,15 +38,35 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue';
-import Papa from 'papaparse';
+import { ref, computed, toRaw } from 'vue';
 
 export default {
-  name: 'CSVDisplayComponent',
+  name: 'JSONDisplayComponent',
   setup() {
     const file = ref(null);
-    const csvData = ref([]);
-    const displayColumns = ref([[], []]);
+    const data = ref([]);
+
+    function collectSynonyms(item) {
+      let synonyms = [
+        item?.fields?.['Synonymous'],
+        item?.fields?.['Synonym'],
+        item?.fields?.['Synonym2'],
+        item?.fields?.['Synonym3'],
+      ]
+      return synonyms.filter(n => n)
+    }
+
+    function getCol1(item) {
+      const tibetan = stripHtml(item?.fields?.['Tibetan'])
+      if (!tibetan) return ""
+      const synonyms = collectSynonyms(item)
+      if (synonyms.length > 0) {
+        return tibetan + ", " + synonyms.join(", ")
+      }
+      else {
+        return tibetan
+      }
+    }
 
     function stripHtml(html)
     {
@@ -54,29 +74,29 @@ export default {
       tmp.innerHTML = html;
       return tmp.textContent || tmp.innerText || "";
     }
-    const loadCSV = () => {
-      if (!file.value) return;
 
-      Papa.parse(file.value, {
-        complete: (results) => {
-          csvData.value = results.data
-            .filter(row => row.length >= 2 && row[0] && row[1])
-            .map(row => [row[0].trim(), row[1].trim()]);
-          shuffleAndDisplay();
-        },
-        error: (error) => {
-          console.error('Error parsing CSV:', error);
-          // You might want to show an error message to the user here
-        }
-      });
-    };
+    const readFile = (filepath) => {
+      const reader = new FileReader();
+      if (filepath.includes(".txt")) {
+        reader.onload = (res) => {
+          data = res.target.result;
+        };
+        reader.onerror = (err) => console.log(err);
+        reader.readAsText(this.file);
+      }
+    }
 
-    const shuffleAndDisplay = () => {
-      const shuffled = [...csvData.value];
-      displayColumns.value = [
-        shuffled.map(row => stripHtml(row[0])),
-        shuffled.map(row => stripHtml(row[1]))
-      ];
+    const loadJson = async () => {
+      if (!file.value) return
+      console.log(file.value)
+      try {
+        const jsonText = await file.value.text();
+        data.value = JSON.parse(jsonText)
+        console.log(JSON.stringify(data.value));
+      }
+      catch (error) {
+        console.error(`Error loading file ${file.value.name}:`, error);
+      }
     };
 
     const getClass  = (i) => {
@@ -88,9 +108,11 @@ export default {
 
     return {
       file,
-      displayColumns,
-      loadCSV,
-      getClass
+      data,
+      loadJson,
+      getClass,
+      getCol1,
+      stripHtml
     };
   }
 };
@@ -98,19 +120,17 @@ export default {
 <style>
   .v-list-item {
     box-shadow: none !important;
-    height: 37mm;
-    border-top: 1px white solid !important;
+    border-bottom: 1px lightgrey solid !important;
     box-sizing: border-box;
-    text-align: center;
+    text-align: left;
   }
   .v-list-item.left {
-    border-right: 1px white solid !important;
   }
   .v-list-item.left {
-    font-size: 40px;
+    font-size: 22px;
   }
   .v-list-item.right {
-    font-size: 20px;
+    font-size: 14px;
   }
   .v-card-text {
     padding: 0 !important;
@@ -131,12 +151,6 @@ export default {
   .v-container {
     padding: 0 !important;
   }
-  .left.small {
-    font-size: 30px !important;
-  }
-  .right.small {
-    font-size: 18px !important;
-  }
 @media print {
   .v-container {
     page-break-inside: avoid;
@@ -156,14 +170,14 @@ export default {
   }
   @page {
     size: A4;
-    margin: 0mm;
+    margin: 8mm;
     background-color: white;
   }
   .v-card {
     box-shadow: none !important;
   }
   .v-list-item, .left.v-list-item {
-    border-color:   grey !important;
+    border-color:   lightgrey !important;
   }
   .v-card-text {
     padding: 0 !important;
