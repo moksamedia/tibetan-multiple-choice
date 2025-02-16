@@ -13,7 +13,10 @@ import App from './App.vue'
 // Composables
 import { createApp } from 'vue'
 
+import InfiniteLoading from "v3-infinite-loading";
+
 const app = createApp(App)
+app.component("infinite-loading", InfiniteLoading);
 
 registerPlugins(app)
 

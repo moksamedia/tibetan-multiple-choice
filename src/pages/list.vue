@@ -11,6 +11,18 @@
       </v-col>
     </v-row>
     <v-row class="ma-0">
+      <v-col class="ma-0 pa-0" cols="12" v-for="(row, i) in sorted" :key="i">
+        <v-row class="ma-0 pa-1">
+          <v-col cols="6" class="ma-0 pa-0 list-item left">
+            {{row[0]}}
+          </v-col>
+          <v-col cols="6" class="ma-0 pa-0 list-item right">
+              {{row[1]}}
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+<!--     <v-row class="ma-0">
       <v-col cols="6" class="ma-0 pa-0">
         <v-card>
           <v-card-text>
@@ -33,7 +45,7 @@
           </v-card-text>
         </v-card>
       </v-col>
-    </v-row>
+    </v-row> -->
   </v-container>
 </template>
 
@@ -47,6 +59,7 @@ export default {
     const file = ref(null);
     const csvData = ref([]);
     const displayColumns = ref([[], []]);
+    const sorted = ref([]);
 
     function stripHtml(html)
     {
@@ -73,11 +86,8 @@ export default {
     };
 
     const shuffleAndDisplay = () => {
-      const shuffled = [...csvData.value].sort((a, b) => a[1].localeCompare(b[1]))
-      displayColumns.value = [
-        shuffled.map(row => row[0]),
-        shuffled.map(row => row[1])
-      ];
+      sorted.value = [...csvData.value].sort((a, b) => a[1].localeCompare(b[1]))
+      console.log(sorted.value)
     };
 
     const getClass  = (i) => {
@@ -89,7 +99,7 @@ export default {
 
     return {
       file,
-      displayColumns,
+      sorted,
       loadCSV,
       getClass
     };
@@ -97,35 +107,25 @@ export default {
 };
 </script>
 <style>
-  .v-list-item {
+  .list-item {
     box-shadow: none !important;
     border-bottom: 1px lightgrey solid !important;
     box-sizing: border-box;
     text-align: left;
+    padding: 30px;
+    line-height: 1.5;
   }
-  .v-list-item.left {
+  .list-item.left {
   }
-  .v-list-item.left {
+  .list-item.left {
     font-size: 22px;
   }
-  .v-list-item.right {
-    font-size: 14px;
-  }
-  .v-card-text {
-    padding: 0 !important;
+  .list-item.right {
+    font-size: 16px;
   }
   .csv {
     padding: 0px !important;
     margin: 0px !important;
-  }
-  .v-card {
-  }
-  .v-list-item {
-    margin: 0px 0;
-  }
-  .v-list {
-    padding: 0 !important;
-    margin: 0 !important;
   }
   .v-container {
     padding: 0 !important;
@@ -144,7 +144,7 @@ export default {
     width: 50%;
     page-break-inside: avoid;
   }
-  .v-list-item {
+  .list-item {
     page-break-inside: avoid;
   }
   @page {
@@ -152,14 +152,8 @@ export default {
     margin: 8mm;
     background-color: white;
   }
-  .v-card {
-    box-shadow: none !important;
-  }
-  .v-list-item, .left.v-list-item {
+  .list-item, .left.list-item {
     border-color:   lightgrey !important;
-  }
-  .v-card-text {
-    padding: 0 !important;
   }
   .v-file-input, #file-input-row {
     display: none !important;

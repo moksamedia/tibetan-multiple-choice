@@ -110,7 +110,7 @@ export default {
     font-size: 40px;
   }
   .v-list-item.right {
-    font-size: 20px;
+    font-size: 40px;
   }
   .v-card-text {
     padding: 0 !important;
@@ -135,7 +135,7 @@ export default {
     font-size: 30px !important;
   }
   .right.small {
-    font-size: 18px !important;
+    font-size: 35px !important;
   }
 @media print {
   .v-container {

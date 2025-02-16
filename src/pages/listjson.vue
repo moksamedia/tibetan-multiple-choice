@@ -53,7 +53,7 @@ export default {
         item?.fields?.['Synonym2'],
         item?.fields?.['Synonym3'],
       ]
-      return synonyms.filter(n => n)
+      return synonyms.filter(n => n).map(n => stripHtml(n))
     }
 
     function getCol1(item) {
