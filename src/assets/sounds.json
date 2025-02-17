@@ -1,0 +1,21 @@
+[
+    {  
+        "name": "རྟོག་པ་ vs ལྡོག་པ་ (verbs) {rtogs pa }",
+        "versionGroups": [
+            {
+                "name":"ལྡོག་པ་",
+                "files":[
+                    "/khelsang/ལྡོག་པ་_1",
+                    "/khelsang/ལྡོག་པ་_2"
+                ]
+            },
+            {
+                "name":"",
+                "files":[
+                    "/khelsang/{rtogs pa }_1",
+                    "/khelsang/{rtogs pa }_2"
+                ]
+            }
+        ]
+    }
+]
