@@ -20,7 +20,7 @@
       >
         <v-col cols="12">
           <v-card>
-            <v-card-title>{{ nameForGroup(group) }}</v-card-title>
+            <v-card-title>{{ group.getScreenName() }}</v-card-title>
             <v-card-text>
               <v-row align="center">
                 <v-col cols="12" md="3">
@@ -39,14 +39,13 @@
                 <v-col cols="12" md="9">
                   <v-btn-group>
                     <v-btn
-                      v-for="sound in group.sounds"
-                      :key="sound.name"
-                      :color="getButtonColor(sound, groupIndex)"
+                      v-for="soundVersionGroup in group.soundVersions"
+                      :key="soundVersionGroup.name"
+                      :color="getButtonColor(soundVersionGroup)"
                       class="mx-1"
-                      @click="checkAnswer(sound, groupIndex)"
-                      :disabled="group.isPlaying || !group.currentSound"
+                      @click="checkAnswer(soundVersionGroup, groupIndex)"
                     >
-                      {{ sound.name }}
+                      {{ soundVersionGroup.name + `(${soundVersionGroup.files.length})`}}
                     </v-btn>
                   </v-btn-group>
                 </v-col>
@@ -60,6 +59,82 @@
 </template>
 
 <script>
+
+class SoundFile {
+    path = null
+    name = null
+    group = null
+    version = null
+    buffer = null
+    constructor(params) {
+        this.path = params.path
+        this.name = params.name
+        this.group = params.group
+        this.version = params.version
+    }
+}
+
+class SoundVersionGroup {
+    name
+    isCorrect = null
+    files = [];
+    constructor(name) {
+        this.name = name;
+    }
+    addFile(file) {
+        this.files.push(file)
+    }
+    getFile(index,buffer) {
+        return files[index]
+    }
+    getRandom() {
+        if (this.files.length == 0) return null;
+        if (this.files.length == 1) return this.files[0]
+        const randomIdx = Math.floor(Math.random()*this.files.length);
+        return this.files[randomIdx];
+    }
+    getRandomBuffer() {
+        return this.getRandom().buffer
+    }
+}
+
+// highest level class
+class SoundGroup {
+    name
+    currentSoundVersionGroup = null;
+    isPlaying = false;
+    soundVersions = []
+    constructor(name) {
+        this.name = name;
+    }
+    setRandomCurrentSounVersionGroup() {
+        const randomIndex = Math.floor(Math.random() * this.soundVersions.length);
+        this.currentSoundVersionGroup = this.soundVersions[randomIndex];
+    }
+    resetGuesses() {
+        this.soundVersions.forEach(sv => sv.isCorrect = null)
+    }
+    getScreenName() {
+        return this.soundVersions.map(soundVersionGroup => soundVersionGroup.name).join(" vs ")
+    }
+    soundVersionGroupForName(name) {
+        return this.soundVersions.find(svg => svg.name == name)
+    }
+    pushSoundFile(file,buffer) {
+        console.log("pushSoundFile file", file)
+        let soundVersionGroup = this.soundVersionGroupForName(file.name)
+        if (!soundVersionGroup) {
+            soundVersionGroup = new SoundVersionGroup(file.name)
+            soundVersionGroup.addFile(file, buffer)
+            this.soundVersions.push(soundVersionGroup)
+        }
+        else {
+            soundVersionGroup.addFile(file, buffer)
+        }
+        console.log("soundVersionGroup created -- " + soundVersionGroup.name)
+    }
+}
+
 export default {
   name: 'SoundGame',
   
@@ -96,15 +171,19 @@ export default {
         
         // Parse the file names and create sound objects
         const soundFiles = files.map(file => {
-            const match = file.match(/^(\d+[a-z]{0,1})_(.+)\.(mp3|wav|ogg)$/i);
+            const match = file.match(/^(\d+[a-z]{0,1})_([^_]+)(_[0-9])?\.(mp3|wav|ogg)$/i);
             if (!match) return null;
             
-            const [_, groupname, name] = match;
-            return {
+            const [_, groupname, name, version, fileExtension] = match;
+            console.log("match",match)
+            const newSoundFile = new SoundFile({
               path: `/sounds/${file}`,
               name: name.toLowerCase(),
               group: groupname,
-            };
+              version: version == null ? "1" : version.replace("_","")
+            });
+            console.log("new SoundFile:", newSoundFile)
+            return newSoundFile;
           })
           .filter(file => file !== null);
 
@@ -116,14 +195,16 @@ export default {
             console.log("file", file)
             
             if (!groups.has(file.group)) {
-                groups.set(file.group, { sounds: [], currentSound: null, isPlaying: false, groupName: file.group });
+                groups.set(file.group, new SoundGroup(file.group));
             }
             const buffer = await this.loadAudioBuffer(file.path);
-            groups.get(file.group).sounds.push({
-                ...file,
-                buffer: buffer,
-                isCorrect: null
-            })
+
+            const soundGroup = groups.get(file.group)
+
+            file.buffer = buffer
+
+            soundGroup.pushSoundFile(file,buffer)
+
             console.log("groups", groups)
         }
 
@@ -159,16 +240,16 @@ export default {
     },
 
     async playRandomSound(groupIndex) {
+
       const group = this.soundGroups[groupIndex];
       if (!group || group.isPlaying) return;
 
       // Reset previous guesses
-      group.sounds.forEach(sound => sound.isCorrect = null);
+      group.resetGuesses();
 
       // Select random sound if none is currently selected
-      if (!group.currentSound) {
-        const randomIndex = Math.floor(Math.random() * group.sounds.length);
-        group.currentSound = group.sounds[randomIndex];
+      if (!group.currentSoundVersionGroup) {
+        group.setRandomCurrentSounVersionGroup()
       }
 
       // Play the current sound
@@ -176,7 +257,7 @@ export default {
       
       try {
         const source = this.audioContext.createBufferSource();
-        source.buffer = group.currentSound.buffer;
+        source.buffer = group.currentSoundVersionGroup.getRandomBuffer();
         source.connect(this.audioContext.destination);
         
         source.onended = () => {
@@ -192,13 +273,12 @@ export default {
       }
     },
 
-    checkAnswer(sound, groupIndex) {
+    checkAnswer(soundVersionGroup, groupIndex) {
       const group = this.soundGroups[groupIndex];
-      if (!group.currentSound) return;
 
       try {
         const source = this.audioContext.createBufferSource();
-        source.buffer = sound.buffer;
+        source.buffer = soundVersionGroup.getRandomBuffer();
         source.connect(this.audioContext.destination);    
         source.start(0);
       } 
@@ -206,18 +286,20 @@ export default {
         console.error('Error playing sound:', error);
       }
 
-      const isCorrect = sound.path === group.currentSound.path;
-      sound.isCorrect = isCorrect;
+      if (!group.currentSoundVersionGroup) return;
+
+      const isCorrect = soundVersionGroup.name === group.currentSoundVersionGroup.name;
+      soundVersionGroup.isCorrect = isCorrect;
 
       if (isCorrect) {
         // Reset current sound when correct answer is found
-        group.currentSound = null;
+        group.currentSoundVersionGroup = null;
       }
     },
 
-    getButtonColor(sound, groupIndex) {
-      if (sound.isCorrect === null) return 'default';
-      return sound.isCorrect ? 'success' : 'error';
+    getButtonColor(soundVersionGroup) {
+      if (soundVersionGroup.isCorrect === null) return 'default';
+      return soundVersionGroup.isCorrect ? 'success' : 'error';
     }
   }
 }
