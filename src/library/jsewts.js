@@ -1869,29 +1869,9 @@ function toWylie(str, escape, warns) {
     return out;
 }
 
-
-function exportJsEWTS(global) {
-
-   const jsEWTS = {
-       fromWylie: fromWylie,
-       toWylie: toWylie
-   }
-   /*
-    if (typeof define === 'function' && define.amd) {
-        define(function(){ return jsEWTS; });
-    }
-    else
-    */
-    if(typeof exports !== 'undefined'){
-        if (typeof module !== 'undefined' && module.exports) {
-            exports = module.exports = jsEWTS ;
-        }
-
-        exports.jsEWTS = jsEWTS;
-    }else {
-        if(global) { global.jsEWTS = jsEWTS }
-        if(window) { window.jsEWTS = jsEWTS }
-    }
-};
-
-exportJsEWTS(this);
+export default {
+    fromWylie,
+    toUnicode: fromWylie,
+    toWylie,
+    fromUnicode: toWylie
+  };

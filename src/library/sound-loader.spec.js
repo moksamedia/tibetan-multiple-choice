@@ -5,57 +5,13 @@ import {
 } from "./sound-loader"
 import { expect, test } from 'vitest'
 import soundstest from '../assets/sounds-test.json'
+import { stringifyJSON } from "./utils"
 
+test('Check replaceWylieInString', () => {
+    expect(replaceWylieInString("{dpe ba } vs {'bad pa } (nouns)")).toBe("དཔེ་བ་ vs འབད་པ་ (nouns)")
+    expect(replaceWylieInString("{bod} and {mtha' } and {slob sbyong }")).toBe("བོད and མཐའ་ and སློབ་སྦྱོང་")
 
- 
-//Recursive implementation of jSON.stringify;
-var stringifyJSON = function(obj) {
-
-    var arrOfKeyVals = [],
-        arrVals = [],
-        objKeys = [];
-
-    /*********CHECK FOR PRIMITIVE TYPES**********/
-    if (typeof obj === 'number' || typeof obj === 'boolean' || obj === null)
-        return '' + obj;
-    else if (typeof obj === 'string')
-        return '"' + obj + '"';
-
-    /*********CHECK FOR ARRAY**********/
-    else if (Array.isArray(obj)) {
-        //check for empty array
-        if (obj[0] === undefined)
-            return '[]';
-        else {
-            obj.forEach(function(el) {
-                arrVals.push(stringifyJSON(el));
-            });
-            return '[' + arrVals + ']';
-        }
-    }
-    /*********CHECK FOR OBJECT**********/
-    else if (obj instanceof Object) {
-        //get object keys
-        objKeys = Object.keys(obj);
-        //set key output;
-        objKeys.forEach(function(key) {
-            var keyOut = '"' + key + '":';
-            var keyValOut = obj[key];
-            //skip functions and undefined properties
-            if (keyValOut instanceof Function || typeof keyValOut === undefined)
-                arrOfKeyVals.push('');
-            else if (typeof keyValOut === 'string')
-                arrOfKeyVals.push(keyOut + '"' + keyValOut + '"');
-            else if (typeof keyValOut === 'boolean' || typeof keValOut === 'number' || keyValOut === null)
-                arrOfKeyVals.push(keyOut + keyValOut);
-            //check for nested objects, call recursively until no more objects
-            else if (keyValOut instanceof Object) {
-                arrOfKeyVals.push(keyOut + stringifyJSON(keyValOut));
-            }
-        });
-        return '{' + arrOfKeyVals + '}';
-    }
-};
+})
 
 test('Check wylie replacement in JSON', () => {
     expect(replaceWylieInString("རྟོག་པ་ vs ལྡོག་པ་ (verbs) {rtogs pa }")).toBe("རྟོག་པ་ vs ལྡོག་པ་ (verbs) རྟོགས་པ་")
@@ -77,4 +33,15 @@ test('Build sound groups', async () => {
     const processedJson = processWylie(soundstest)
     const result = await buildSoundGroups(processedJson)
     console.log("result", stringifyJSON(result))
+    expect(result.length).toBe(2)
+    const [sg1, sg2] = result
+    expect(sg1.name).toBe("རྟོག་པ་ vs ལྡོག་པ་ (verbs) རྟོགས་པ་")
+    expect(sg2.name).toBe("དཔེ་བ་ vs འབད་པ་ (nouns)")
+
+    expect(sg1.soundVersions.length).toBe(2)
+    expect(sg2.soundVersions.length).toBe(3)
+
+    expect(sg2.soundVersions[0].files.length).toBe(2)
+    expect(sg2.soundVersions[1].files.length).toBe(1)
+    expect(sg2.soundVersions[2].files.length).toBe(3)
 })

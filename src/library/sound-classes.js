@@ -7,11 +7,13 @@ export class SoundFile {
     buffer = null
     speaker = null
     constructor(params) {
+        console.log("SoundFile: "+JSON.stringify(params))
         this.path = params.path
         this.name = params.name
         this.group = params.group
         this.version = params.version
         this.speaker = params.speaker
+        this.buffer = params.buffer
     }
 }
 
@@ -63,14 +65,15 @@ export class SoundGroup {
     }
     pushSoundFile(name,file,speaker,buffer) {
         console.log("pushSoundFile file", file)
+        console.log("buffer", buffer)
         let soundVersionGroup = this.soundVersionGroupForName(name)
         if (!soundVersionGroup) {
             soundVersionGroup = new SoundVersionGroup(name)
-            soundVersionGroup.addFile(file, speaker, buffer)
+            soundVersionGroup.addFile(new SoundFile({path:file, speaker, buffer}))
             this.soundVersions.push(soundVersionGroup)
         }
         else {
-            soundVersionGroup.addFile(new SoundFile({file, speaker, buffer}))
+            soundVersionGroup.addFile(new SoundFile({path:file, speaker, buffer}))
         }
         console.log("soundVersionGroup created -- " + soundVersionGroup.name)
     }

@@ -17,5 +17,31 @@
                 ]
             }
         ]
+    },
+    {  
+        "name": "{dpe ba } vs {'bad pa } (nouns)",
+        "versionGroups": [
+            {
+                "name":"{dpe pa }",
+                "files":[
+                    "/khelsang/དཔེ་པ་_1",
+                    "/khelsang/དཔེ་པ་_2"
+                ]
+            },
+            {
+                "name":"bob",
+                "files":[
+                    "/khelsang/འབད་པ་_1"
+                ]
+            },
+            {
+                "name":"3",
+                "files":[
+                    "/khelsang/འབད་པ་_1",
+                    "/khelsang/འབད་པ་_2",
+                    "/khelsang/འབད་པ་_2"
+                ]
+            }
+        ]
     }
 ]

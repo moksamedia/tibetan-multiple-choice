@@ -60,80 +60,8 @@
 
 <script>
 
-class SoundFile {
-    path = null
-    name = null
-    group = null
-    version = null
-    buffer = null
-    constructor(params) {
-        this.path = params.path
-        this.name = params.name
-        this.group = params.group
-        this.version = params.version
-    }
-}
-
-class SoundVersionGroup {
-    name
-    isCorrect = null
-    files = [];
-    constructor(name) {
-        this.name = name;
-    }
-    addFile(file) {
-        this.files.push(file)
-    }
-    getFile(index,buffer) {
-        return files[index]
-    }
-    getRandom() {
-        if (this.files.length == 0) return null;
-        if (this.files.length == 1) return this.files[0]
-        const randomIdx = Math.floor(Math.random()*this.files.length);
-        return this.files[randomIdx];
-    }
-    getRandomBuffer() {
-        return this.getRandom().buffer
-    }
-}
-
-// highest level class
-class SoundGroup {
-    name
-    currentSoundVersionGroup = null;
-    isPlaying = false;
-    soundVersions = []
-    constructor(name) {
-        this.name = name;
-    }
-    setRandomCurrentSounVersionGroup() {
-        const randomIndex = Math.floor(Math.random() * this.soundVersions.length);
-        this.currentSoundVersionGroup = this.soundVersions[randomIndex];
-    }
-    resetGuesses() {
-        this.soundVersions.forEach(sv => sv.isCorrect = null)
-    }
-    getScreenName() {
-        return this.soundVersions.map(soundVersionGroup => soundVersionGroup.name).join(" vs ")
-    }
-    soundVersionGroupForName(name) {
-        return this.soundVersions.find(svg => svg.name == name)
-    }
-    pushSoundFile(file,buffer) {
-        console.log("pushSoundFile file", file)
-        let soundVersionGroup = this.soundVersionGroupForName(file.name)
-        if (!soundVersionGroup) {
-            soundVersionGroup = new SoundVersionGroup(file.name)
-            soundVersionGroup.addFile(file, buffer)
-            this.soundVersions.push(soundVersionGroup)
-        }
-        else {
-            soundVersionGroup.addFile(file, buffer)
-        }
-        console.log("soundVersionGroup created -- " + soundVersionGroup.name)
-    }
-}
+import {SoundFile, SoundVersionGroup, SoundGroup} from '../library/sound-classes'
+import {getSoundGroups} from '../library/sound-loader'
 
 export default {
   name: 'SoundGame',
@@ -159,59 +87,8 @@ export default {
   methods: {
     async loadSoundFiles() {
       try {
-        // Fetch the static manifest file
-        const response = await fetch('/sound-manifest.json');
-        if (!response.ok) {
-          throw new Error('Failed to fetch sound files list');
-        }
-        
-        const files = await response.json();
-
-        console.log("files", files)
-        
-        // Parse the file names and create sound objects
-        const soundFiles = files.map(file => {
-            const match = file.match(/^(\d+[a-z]{0,1})_([^_]+)(_[0-9])?\.(mp3|wav|ogg)$/i);
-            if (!match) return null;
-            
-            const [_, groupname, name, version, fileExtension] = match;
-            console.log("match",match)
-            const newSoundFile = new SoundFile({
-              path: `/sounds/${file}`,
-              name: name.toLowerCase(),
-              group: groupname,
-              version: version == null ? "1" : version.replace("_","")
-            });
-            console.log("new SoundFile:", newSoundFile)
-            return newSoundFile;
-          })
-          .filter(file => file !== null);
-
-        console.log("soundfiles", soundFiles)
-
-        const groups = new Map()
-
-        for (const file of soundFiles) {
-            console.log("file", file)
-            
-            if (!groups.has(file.group)) {
-                groups.set(file.group, new SoundGroup(file.group));
-            }
-            const buffer = await this.loadAudioBuffer(file.path);
-
-            const soundGroup = groups.get(file.group)
-
-            file.buffer = buffer
-
-            soundGroup.pushSoundFile(file,buffer)
-
-            console.log("groups", groups)
-        }
-
-        console.log(groups.keys().length + " groups found.")
-        console.log("groups", groups)
-
-        this.soundGroups = [...groups.values()];
+        if (this.audioContext == null) throw Error("No audio context")
+        this.soundGroups = await getSoundGroups(this.audioContext);
         console.log("soundGroups", this.soundGroups);
         this.isLoading = false;
       } catch (error) {

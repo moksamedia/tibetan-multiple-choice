@@ -5,15 +5,17 @@
             {
                 "name":"ལྡོག་པ་",
                 "files":[
-                    "/khelsang/ལྡོག་པ་_1",
-                    "/khelsang/ལྡོག་པ་_2"
+                    "khelsang/ལྡོག་པ་_1.mp3",
+                    "khelsang/ལྡོག་པ་_2.mp3",
+                    "khelsang/ལྡོག་པ་_3.mp3"
                 ]
             },
             {
-                "name":"",
+                "name":"{rtog pa }",
                 "files":[
-                    "/khelsang/{rtogs pa }_1",
-                    "/khelsang/{rtogs pa }_2"
+                    "khelsang/{rtog pa }_1.mp3",
+                    "khelsang/{rtog pa }_2.mp3",
+                    "khelsang/{rtog pa }_3.mp3"
                 ]
             }
         ]
