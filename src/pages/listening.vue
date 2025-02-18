@@ -20,10 +20,11 @@
       >
         <v-col cols="12">
           <v-card>
-            <v-card-title>{{ group.getScreenName() }}</v-card-title>
+            <v-card-title class="group-title">{{ group.getScreenName() }}</v-card-title>
             <v-card-text>
               <v-row align="center">
                 <v-col cols="12" md="3">
+        
                   <v-btn
                     block
                     color="primary"
@@ -32,23 +33,37 @@
                     :disabled="group.isPlaying"
                   >
                     <v-icon left>mdi-play</v-icon>
-                    Play Sound
+                    Random
                   </v-btn>
                 </v-col>
                 
-                <v-col cols="12" md="9">
-                  <v-btn-group>
+                <v-col cols="12" md="6">
+                  <v-btn-group class="answer-btn-group">
                     <v-btn
                       v-for="soundVersionGroup in group.soundVersions"
                       :key="soundVersionGroup.name"
+                      size="x-large"
                       :color="getButtonColor(soundVersionGroup)"
-                      class="mx-1"
                       @click="checkAnswer(soundVersionGroup, groupIndex)"
                     >
-                      {{ soundVersionGroup.name + `(${soundVersionGroup.files.length})`}}
+                      {{ soundVersionGroup.name }} <span class="num-files">{{`(${soundVersionGroup.files.length})`}}</span>
                     </v-btn>
                   </v-btn-group>
                 </v-col>
+
+                <v-col cols="12" md="3">
+                  <v-btn-group>
+                    <v-btn
+                    block
+                    color="secondary"
+                    @click="playLong(group.long)"
+                  >
+                    <v-icon left>mdi-play</v-icon>
+                    Long
+                  </v-btn>
+                  </v-btn-group>
+                </v-col>
+
               </v-row>
             </v-card-text>
           </v-card>
@@ -116,6 +131,21 @@ export default {
         },"")
     },
 
+    async playLong(longBuffer) {
+      try {
+        const source = this.audioContext.createBufferSource();
+        source.buffer = longBuffer;
+        source.connect(this.audioContext.destination);
+        
+        source.start(0);
+
+      } 
+      catch (error) {
+        console.error('Error playing sound:', error);
+        group.isPlaying = false;
+      }
+    },
+
     async playRandomSound(groupIndex) {
 
       const group = this.soundGroups[groupIndex];
@@ -134,7 +164,7 @@ export default {
       
       try {
         const source = this.audioContext.createBufferSource();
-        source.buffer = group.currentSoundVersionGroup.getRandomBuffer();
+        source.buffer = group.currentSoundVersionGroup.getNextBuffer();
         source.connect(this.audioContext.destination);
         
         source.onended = () => {
@@ -155,7 +185,7 @@ export default {
 
       try {
         const source = this.audioContext.createBufferSource();
-        source.buffer = soundVersionGroup.getRandomBuffer();
+        source.buffer = soundVersionGroup.getNextBuffer ();
         source.connect(this.audioContext.destination);    
         source.start(0);
       } 
@@ -182,8 +212,15 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .v-btn-group .v-btn {
   margin: 0 4px;
+}
+.num-files {
+  font-size:50%;
+  color:gray;
+}
+.answer-btn-group .v-btn__content, .group-title {
+  font-size: 150% !important;
 }
 </style>

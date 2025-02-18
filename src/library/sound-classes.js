@@ -30,6 +30,18 @@ export class SoundVersionGroup {
     getFile(index,buffer) {
         return files[index]
     }
+    nextFile = 0
+    getNext() {
+        if (this.files.length == 0) return null;
+        if (this.files.length == 1) return this.files[0]
+        const next = this.files[this.nextFile]
+        this.nextFile += 1
+        if (this.nextFile == this.files.length) this.nextFile = 0
+        return next
+    }
+    getNextBuffer() {
+        return this.getNext().buffer
+    }
     getRandom() {
         if (this.files.length == 0) return null;
         if (this.files.length == 1) return this.files[0]
@@ -47,6 +59,7 @@ export class SoundGroup {
     currentSoundVersionGroup = null;
     isPlaying = false;
     soundVersions = []
+    long = null
     constructor(name) {
         this.name = name;
     }
@@ -58,7 +71,8 @@ export class SoundGroup {
         this.soundVersions.forEach(sv => sv.isCorrect = null)
     }
     getScreenName() {
-        return this.soundVersions.map(soundVersionGroup => soundVersionGroup.name).join(" vs ")
+        if (this.name) return this.name
+        else return this.soundVersions.map(soundVersionGroup => soundVersionGroup.name).join(" vs ")
     }
     soundVersionGroupForName(name) {
         return this.soundVersions.find(svg => svg.name == name)

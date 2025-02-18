@@ -29,12 +29,14 @@ export function processWylie(json) {
     let newJson = json
     json.forEach( (soundGroup, index) => {
         json[index].name = replaceWylieInString(soundGroup.name)
-        soundGroup.versionGroups.forEach((vg, j) => {
-            json[index].versionGroups[j].name = replaceWylieInString(vg.name)
-            vg.files.forEach((file, k) => {
-                json[index].versionGroups[j].files[k] = replaceWylieInString(file)
+        if (soundGroup.versionGroups) {
+            soundGroup.versionGroups.forEach((vg, j) => {
+                json[index].versionGroups[j].name = replaceWylieInString(vg.name)
+                vg.files.forEach((file, k) => {
+                    json[index].versionGroups[j].files[k] = replaceWylieInString(file)
+                })
             })
-        })
+        }
     })
     return newJson
 }
@@ -60,6 +62,44 @@ export async function buildSoundGroups(json, audioContext) {
     let soundGroups =
     await Promise.all(json.map(async (sg) => {
         const soundGroupObj = new SoundGroup(sg.name)
+        const longFile = sg.long
+        const longBuffer = audioContext != null ? await loadAudioBuffer(longFile, audioContext) : null
+        soundGroupObj.long = longBuffer
+        
+        /*
+            Can build the json dynamically from a pattern, assuming all version groups
+            have the same number of files and are named appropriate.
+            
+            Assumptions:
+            - name is in format: {sound1} vs {sound2} vs {sound3}
+            - file names are "{sound1} 1.mp3" "{sound1} 2.mp3" etc.
+            - speaker name path can be pulled from long file
+            - all sounds have an equal number of files set by applyPattern
+        */
+        if (sg.applyPattern) {
+            console.log("Applying pattern " + sg.applyPattern)
+            let sounds = sg.name.split(" vs ")
+            // remove any non-tibetan chars from final sound name
+            // to remove any final notes, such as " (noun)"
+            sounds = sounds.map(s => s.replace(/[^\u0f00-\u0fff]*/g,""))
+            const numFiles = sg.applyPattern
+            sg.versionGroups = []
+            sounds.forEach(soundName => {
+                // create the version group
+
+                const speaker = getSpeakerFromFilePath(sg.long)
+
+                const files = []
+                for (let c=0;c<numFiles;c++) {
+                    files.push(`${speaker}/${soundName} ${c+1}.mp3`)
+                }
+
+                sg.versionGroups.push({
+                    name:soundName,
+                    files:files
+                })
+            })
+        }
         await Promise.all(sg.versionGroups.map(async (vg) => {
             await Promise.all(vg.files.map(async (file) => {
                 const speaker = getSpeakerFromFilePath(file)
