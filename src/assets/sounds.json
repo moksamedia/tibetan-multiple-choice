@@ -199,5 +199,25 @@
         "name": "མིག་ vs དམིགས་",
         "long":"khelsang/བདེ་འཇགས་ vs བརྟན་འཇགས་.mp3",
         "applyPattern":2
+    },
+    {  
+        "name": "སྒྲིབ་པ་ vs མཁྲིས་པ་",
+        "long":"khelsang/སྒྲིབ་པ་ vs མཁྲིས་པ་.mp3",
+        "applyPattern":2
+    },
+    {  
+        "name": "སྦང་བ་ vs སྤང་བ་ (v)",
+        "long":"khelsang/སྦང་བ་ vs སྤང་བ་.mp3",
+        "applyPattern":2
+    },
+    {  
+        "name": "གཅེས་ vs རྗེས་",
+        "long":"khelsang/གཅེས་ vs རྗེས་.mp3",
+        "applyPattern":2
+    },
+    {  
+        "name": "མགོ་ vs ཀོ་བ་",
+        "long":"khelsang/མགོ་ vs ཀོ་བ་.mp3",
+        "applyPattern":2
     }
 ]
